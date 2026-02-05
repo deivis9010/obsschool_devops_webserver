@@ -1,0 +1,52 @@
+name: pull-request-check
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  quality-gate:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Checkout del código para buscar el archivo
+      - name: Checkout local del proyecto
+        uses: actions/checkout@v4
+
+      # 2. Analizar el código (Mock)
+      - name: Realizando análisis de SAST
+        run: echo "Realizando análisis de SAST"
+
+      # 3. Comprobar requisitos (Generar variable allow_pull)
+      # Usamos el GITHUB_OUTPUT para persistir la variable
+      - name: Comprobar requisitos
+        id: check_file
+        run: |
+          if [ -f "allow_pull_request.txt" ]; then
+            echo "allow_pull=true" >> $GITHUB_OUTPUT
+          else
+            echo "allow_pull=false" >> $GITHUB_OUTPUT
+          fi
+
+      # 4. Permitir la build si allow_pull vale True
+      - name: Permitir Pull Request
+        if: steps.check_file.outputs.allow_pull == 'true'
+        run: echo "Permitiendo Pull Request"
+
+      # 5. Impedir la build si allow_pull vale False
+      - name: Impedir Pull Request
+        if: steps.check_file.outputs.allow_pull == 'false'
+        run: |
+          echo "Build fallida. Impidiendo Pull Request"
+          exit 1
+
+      # 6. Guardar archivo generado como artefacto
+      # El ejercicio pide guardar "este archivo generado". 
+      # Guardaremos el archivo de control si existe.
+      - name: Guardar artefacto
+        if: always() # Queremos el log/artefacto incluso si falla
+        uses: actions/upload-artifact@v4
+        with:
+          name: pull-request-report
+          path: allow_pull_request.txt
+          if-no-files-found: warn
