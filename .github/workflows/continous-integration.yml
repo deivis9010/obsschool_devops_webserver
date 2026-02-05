@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+      - 'feature*'  # Ramas que empiezan por feature (ej: feature-sast)
+      - 'hotfix*'   # Ramas que empiezan por hotfix (ej: hotfix-fix-db)
+      - 'feat*'     # Ramas que empiezan por feat (ej: feat-nueva-func) incluido porque es la rama que ya existe en el repo
 
 jobs:
   build-and-test:
