@@ -1,0 +1,38 @@
+name: continous-integration
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Aunque la nota dice que no es necesario, en Actions se requiere 
+      # para que el runner acceda al archivo .tpl y al Dockerfile.
+      - name: Checkout local del proyecto
+        uses: actions/checkout@v4
+
+      # 1. Ejecución de pruebas de calidad de código (Mock)
+      - name: Pruebas de SAST
+        run: echo "Ejecución de pruebas de SAST"
+
+      # 2. Crear archivo de credenciales
+      - name: Crear archivo de credenciales
+        env:
+          USER: ${{ secrets.USERNAME }}
+          PASS: ${{ secrets.PASSWORD }}
+        run: |
+          sed -e "s/\${USERNAME}/$USER/g" \
+              -e "s/\${PASSWORD}/$PASS/g" \
+              credentials.ini.tpl > credentials.ini
+
+      # 3. Construcción del container de Docker
+      - name: Build docker image
+        run: docker build -t devops_ws . --tag devops_ws_:$(date +%s)
+
+      # Paso extra para tu captura: Verificar que el archivo se creó correctamente
+      - name: Verificar credentials.ini
+        run: cat credentials.ini
